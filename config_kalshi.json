@@ -1,0 +1,122 @@
+{
+  "paper": true,
+  "venue": "kalshi",
+  "series_ticker": "KXBTC15M",
+  "starting_budget_usd": 100.0,
+  "per_trade_usd": 10.0,
+  "timezone": "America/Los_Angeles",
+  "poll_interval_sec": 5,
+  "signal_eval_interval_sec": 15,
+  "signal": {
+    "min_grade": "B",
+    "grade_thresholds": {
+      "A+": 8,
+      "A": 7,
+      "B": 5
+    },
+    "strike_min_bps": 2.0,
+    "trigger_bars_10s": 3,
+    "momentum_1m_bps": 1.0,
+    "ribbon_fast": 8,
+    "ribbon_mid": 13,
+    "ribbon_slow": 21,
+    "bos_lookback_10s_bars": 18,
+    "volume_ratio_min": 1.2,
+    "orderflow_window_sec": 60,
+    "orderflow_imbalance_min": 0.1,
+    "location_lookback_min": 60,
+    "location_edge_frac": 0.3,
+    "rsi_period": 14,
+    "rsi_bull": 55,
+    "rsi_bear": 45,
+    "rsi_stretched_hi": 75,
+    "rsi_stretched_lo": 25
+  },
+  "model": {
+    "vol_lookback_min": 60,
+    "score_tilt_k": 0.5,
+    "min_sigma_per_sec": 2e-05
+  },
+  "entry": {
+    "min_edge": 0.03,
+    "edge_bands": [
+      {
+        "min_price": 0.6,
+        "max_price": 0.7,
+        "min_edge": 0.05
+      }
+    ],
+    "min_price": 0.5,
+    "max_price": 0.75,
+    "entry_window_start_sec": 120,
+    "entry_window_end_sec": 540,
+    "early_entry_end_sec": 240,
+    "late_entry_min_score": 7,
+    "late_entry_min_left_sec": 360,
+    "_note": "Entry t+120..240s any grade>=B (price 0.50-0.75, pay the ask); later only score>=7 with >=6m left; nothing after t+540s. Min edge 0.03, but 0.05 for ask/limit 0.60-0.70 inclusive (edge_bands).",
+    "orderflow": {
+      "enabled": true,
+      "block_opposing_usd": 1000000,
+      "lookback_sec": 60,
+      "refresh_sec": 5,
+      "max_age_sec": 30,
+      "http_timeout_sec": 3,
+      "coinbase_scale": 0.5,
+      "_note": "YoungBuffett/Bucko bookmeter: block LONG if Binance BTCUSDT 1m taker delta <= -$1M, SHORT if >= +$1M. $1M ~ 95th pct of |1m delta| over the last ~7 days (10k minutes); blocks ~3% of minutes per side. Source data-api.binance.vision 1s klines (api.binance.com is geo-blocked 451). Fallback Coinbase in-memory trades at 0.5x threshold ($500k). Fails open if no data <30s old."
+    }
+  },
+  "exit": {
+    "take_profit_delta": 0.2,
+    "stop_loss_delta": 0.12,
+    "bid_ceiling": 0.92,
+    "exit_buffer_sec": 60,
+    "stop_loss_enabled": false,
+    "partial_tp": false,
+    "_note": "No stop-loss (losers held to settlement). Exits, first to trigger wins: CEIL bid>=0.92, mid_window TP_MID (+15% net) / BE (<=180s left), TP +0.20 sells the whole position.",
+    "mid_window": {
+      "enabled": true,
+      "entry_remaining_max_sec": 900,
+      "entry_remaining_min_sec": 0,
+      "tp_pct": 0.15,
+      "breakeven_remaining_sec": 180,
+      "_note": "Applies to every entry (0-900s left). Sell ALL once bid minus exit taker fee >= 1.15 x all-in entry cost per contract (entry price + entry fee). If not hit and <=180s left, sell ALL as soon as bid minus exit fee >= all-in entry cost (true breakeven). The +0.20 TP still applies too (whichever triggers first). Neither -> hold to settlement (no SL). CEIL 0.92 checked first; no exits in the last exit_buffer_sec (60s). Applies to paper + live."
+    }
+  },
+  "risk": {
+    "daily_loss_cap_usd": 100.0,
+    "daily_profit_cap_usd": 0,
+    "max_trades_per_day": 50,
+    "max_spread": 0.04,
+    "max_data_age_sec": 30,
+    "cooldown_after_losses": 3,
+    "cooldown_windows": 2,
+    "allowed_sessions": [
+      "asia",
+      "london",
+      "ny",
+      "off"
+    ]
+  },
+  "fees": {
+    "taker_rate": 0.07,
+    "maker_rate": 0.0
+  },
+  "live": {
+    "enabled": false,
+    "dry_run": true,
+    "max_cost_per_trade_usd": 20.0,
+    "max_trades_per_day": 50,
+    "daily_loss_cap_usd": 100.0,
+    "min_score": 5,
+    "_note": "Hard caps in btcbot/live.py: grade sizing B $10 / A $15 / A+ $20 (hard max $20), stake steps down 20->15->10 if the full stake could breach the $100 daily loss cap, 50 trades/day, 1 open position, score>=5. Config can only lower them."
+  },
+  "_note": "paper=true keeps the paper ledger running in parallel; live block controls real orders.",
+  "chop": {
+    "enabled": true,
+    "lookback_min": 10,
+    "er_min": 0.25,
+    "range_atr_min": 2.3,
+    "atr_period": 14,
+    "_note": "MIXED/WAIT = skip: ribbon + 15m ctx (trend) and 1m mom + 10s trigger (momentum) must agree with side; skip if 10m efficiency ratio < er_min or 10m range < range_atr_min x ATR14"
+  }
+}

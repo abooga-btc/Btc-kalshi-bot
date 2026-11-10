@@ -1,0 +1,21 @@
+# Secrets and keys
+.env
+*.pem
+*.key
+
+# Runtime data, logs, and caches
+data/**
+!data/.gitkeep
+data_kalshi/**
+!data_kalshi/.gitkeep
+logs/**
+!logs/.gitkeep
+*.pkl
+*.pyc
+__pycache__/
+.venv/
+venv/
+*.log
+
+# Kill switch (local only)
+KILL
